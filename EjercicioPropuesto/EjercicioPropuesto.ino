@@ -29,8 +29,8 @@ volatile uint16_t lastMsgID;  // ID del último mensaje enviado
 
 volatile int thresholdRSSI = -80;   // Umbral para el RSSI [0, -127]
 volatile float thresholdSNR = -10;  // Umbral para el SNR [20, -148]
-volatile float toleranceRSSI = abs(thresholdRSSI * 0.1);
-volatile float toleranceSNR = abs(thresholdSNR * 0.1);
+// volatile float toleranceRSSI = abs(thresholdRSSI * 0.1);
+// volatile float toleranceSNR = abs(thresholdSNR * 0.1);
 
 volatile bool receivedACK = true;   // ACK recibido
 volatile bool sendImprovedConfig;   // Mejorar la configuración en base al RSSI y SNR
@@ -220,12 +220,7 @@ int decreaseTxPower(int power) {
 }
 
 bool checkReceivedRSSIandSNR(int rssi, float snr) {
-  float upRSSI = thresholdRSSI + toleranceRSSI;
-  float downRSSI = thresholdRSSI - toleranceRSSI;
-  float upSNR = thresholdSNR + toleranceSNR;
-  float downSNR = thresholdSNR - toleranceSNR;
-
-  if ((rssi <= upRSSI && rssi >= downRSSI) && (snr <= upSNR && snr >= downSNR)) {
+  if (rssi > thresholdRSSI && snr > thresholdSNR) {
     return true;
   }
   return false;
