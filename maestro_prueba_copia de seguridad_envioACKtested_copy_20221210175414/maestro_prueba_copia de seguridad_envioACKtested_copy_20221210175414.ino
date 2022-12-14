@@ -35,10 +35,13 @@ volatile bool sendImprovedConfig = true;
 volatile uint16_t lastMsgID;
 volatile int thresholdRSSI = -80;   // Umbral para el RSSI [0, -127]
 volatile float thresholdSNR = -10;  // Umbral para el SNR [20, -148]
+volatile uint32_t lastReceivedTime_ms = 0;
+
 int tiempo_max = 50000;
 int dummyCounter = 0;
 int dummyTotalReceivedRSSI = 0;
 float dummyTotalReceivedSNR = 0;
+
 
 
 // Estructura para almacenar la configuración de la radio
@@ -201,11 +204,9 @@ void loop()
   }*/
 
 
-  /*
-  if((millis() - lastSendTime_ms) > tiempo_max) {
+  if(((millis() - lastReceivedTime_ms) > tiempo_max) && ((millis() - lastSendTime_ms) > tiempo_max)) {
     goBackToInitialConf();
   }
-  */
 
 }
 
@@ -247,6 +248,10 @@ void onReceive(int packetSize)
   uint8_t incomingLength = LoRa.read(); // Longitud en bytes del mensaje
   
   uint8_t receivedBytes = 0;            // Leemos el mensaje byte a byte
+
+  lastReceivedTime_ms = millis();
+  Serial.print("LAST RECEIVED:");
+  Serial.println(lastReceivedTime_ms);
   while (LoRa.available() && (receivedBytes < uint8_t(sizeof(buffer)-1))) {            
     buffer[receivedBytes++] = (char)LoRa.read();
   }
@@ -308,6 +313,8 @@ void onReceive(int packetSize)
       sendImprovedConfig = false;
     }
     dummyCounter = 0;
+    dummyTotalReceivedRSSI = 0;
+    dummyTotalReceivedSNR = 0;
   } else if (incomingMsgId == 0) {  // ID = 0 significa que recibe un paquete dummy
     dummyTotalReceivedRSSI += receivedRSSI;
     dummyTotalReceivedSNR += receivedSNR;
@@ -410,8 +417,10 @@ void changeMasterConfiguration() {
 }
 
 void goBackToInitialConf() {
+  Serial.println("Going back to initial conf");
   thisNodeConf = initialNodeConf;
   transmitting = false;
-  flag_ack_wait = true;
+  flag_ack_wait = false;
+  txDoneFlag = true;
   changeMasterConfiguration();
 }

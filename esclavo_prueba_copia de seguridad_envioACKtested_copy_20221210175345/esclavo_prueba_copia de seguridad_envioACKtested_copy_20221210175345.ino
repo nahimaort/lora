@@ -166,7 +166,8 @@ void loop()
     LoRa.receive();
   }
 
-  /*
+
+/*
   if ((millis() - lastSendTime_ms) > tiempo_max) {
     goBackToInitialConf();
   }
@@ -362,6 +363,7 @@ void enviar_dummy(){
 }
 
 void goBackToInitialConf() {
+  Serial.println("Going back to initial conf");
   thisNodeConf = initialNodeConf;
   flag_envio = false;
   transmitting = false;
