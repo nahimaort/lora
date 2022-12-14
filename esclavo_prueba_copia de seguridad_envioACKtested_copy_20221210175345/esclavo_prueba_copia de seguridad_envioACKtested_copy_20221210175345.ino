@@ -49,6 +49,7 @@ double bandwidth_kHz[10] = {7.8E3, 10.4E3, 15.6E3, 20.8E3, 31.25E3,
 
 LoRaConfig_t thisNodeConf   = { 2, 10, 5, 2};
 LoRaConfig_t remoteNodeConf = { 0,  0, 0, 0};
+LoRaConfig_t initialNodeConf = { 2, 10, 5, 2};
 int remoteRSSI = 0;
 float remoteSNR = 0;
 
@@ -140,11 +141,7 @@ void loop()
     }
     
   }
-  /*if((millis() - lastSendTime_ms) > tiempo_max){
-    //depuration();
-    enviar_ack();
-    delay(100000);
-  }*/
+
   if (transmitting && txDoneFlag) {
     uint32_t TxTime_ms = millis() - tx_begin_ms;
     Serial.print("----> TX completed in ");
@@ -167,6 +164,10 @@ void loop()
 
     transmitting = false;
     LoRa.receive();
+  }
+
+  if ((millis() - lastSendTime_ms) > tiempo_max) {
+    goBackToInitialConf();
   }
 }
 // --------------------------------------------------------------------
@@ -209,6 +210,10 @@ void onReceive(int packetSize)
     return;
   }
   msgCount = incomingMsgId;
+
+  if (incomingMsgId == 0) {
+    Serial.println("RECEIVED DUMMY PACKET");
+  }
   // Imprimimos los detalles del mensaje recibido
   Serial.println("Received from: 0x" + String(sender, HEX));
   Serial.println("Sent to: 0x" + String(recipient, HEX));
@@ -348,8 +353,15 @@ void enviar_dummy(){
   tx_begin_ms = millis();
 
   sendMessage(payload_dummy, payloadLength_dummy, 0);
-  Serial.print("Sending dummy: ");
+  Serial.print("SENDING DUMMY PACKET: ");
   printBinaryPayload(payload_dummy, payloadLength_dummy);
   Serial.println();
 
+}
+
+void goBackToInitialConf() {
+  thisNodeConf = initialNodeConf;
+  flag_envio = false;
+  transmitting = false;
+  aplicar_cambios();
 }

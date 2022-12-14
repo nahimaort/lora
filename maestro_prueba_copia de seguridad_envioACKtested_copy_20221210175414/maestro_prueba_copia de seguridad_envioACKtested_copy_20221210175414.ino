@@ -49,6 +49,7 @@ double bandwidth_kHz[10] = {7.8E3, 10.4E3, 15.6E3, 20.8E3, 31.25E3,
 
 LoRaConfig_t thisNodeConf   = { 2, 10, 5, 2};
 LoRaConfig_t remoteNodeConf = { 0,  0, 0, 0};
+LoRaConfig_t initialNodeConf = { 2, 10, 5, 2};
 int remoteRSSI = 0;
 float remoteSNR = 0;
 
@@ -193,6 +194,12 @@ void loop()
     depuration();
     delay(100000);
   }*/
+
+
+  if((millis() - lastSendTime_ms) > tiempo_max) {
+    goBackToInitialConf();
+  }
+
 }
 
 // --------------------------------------------------------------------
@@ -259,6 +266,10 @@ void onReceive(int packetSize)
     return;
   }
 
+  if (incomingMsgId == 0) {
+    Serial.println("RECEIVED DUMMY PACKET");
+  }
+
   // Imprimimos los detalles del mensaje recibido
   Serial.println("Received from: 0x" + String(sender, HEX));
   Serial.println("Sent to: 0x" + String(recipient, HEX));
@@ -282,10 +293,7 @@ void onReceive(int packetSize)
     } else {
       sendImprovedConfig = false;
     }
-    
   }
-  
-
 }
 
 void TxFinished()
@@ -379,4 +387,11 @@ void changeMasterConfiguration() {
   LoRa.setSpreadingFactor(thisNodeConf.spreadingFactor);
   LoRa.setCodingRate4(thisNodeConf.codingRate);
   LoRa.setTxPower(thisNodeConf.txPower, PA_OUTPUT_PA_BOOST_PIN);
+}
+
+void goBackToInitialConf() {
+  thisNodeConf = initialNodeConf;
+  transmitting = false;
+  flag_ack_wait = true;
+  changeMasterConfiguration();
 }
