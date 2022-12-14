@@ -36,6 +36,11 @@ volatile uint16_t lastMsgID;
 volatile int thresholdRSSI = -80;   // Umbral para el RSSI [0, -127]
 volatile float thresholdSNR = -10;  // Umbral para el SNR [20, -148]
 int tiempo_max = 50000;
+int dummyCounter = 0;
+int dummyTotalReceivedRSSI = 0;
+float dummyTotalReceivedSNR = 0;
+
+
 // Estructura para almacenar la configuración de la radio
 typedef struct {
   uint8_t bandwidth_index;
@@ -196,9 +201,11 @@ void loop()
   }*/
 
 
+  /*
   if((millis() - lastSendTime_ms) > tiempo_max) {
     goBackToInitialConf();
   }
+  */
 
 }
 
@@ -267,7 +274,8 @@ void onReceive(int packetSize)
   }
 
   if (incomingMsgId == 0) {
-    Serial.println("RECEIVED DUMMY PACKET");
+    Serial.print("RECEIVED DUMMY PACKET N");
+    Serial.println(dummyCounter + 1);
   }
 
   // Imprimimos los detalles del mensaje recibido
@@ -282,17 +290,29 @@ void onReceive(int packetSize)
   Serial.print("\nRSSI: " + String(receivedRSSI));
   Serial.print(" dBm\nSNR: " + String(receivedSNR));
   Serial.println(" dB");
+  Serial.println();
 
   
 
   if (incomingMsgId == lastMsgID) { // Recibiendo ACK del esclavo
     flag_ack_wait = false;
-  } else if (incomingMsgId == 0) {  // ID = 0 significa que recibe un paquete dummy
-    if (checkReceivedRSSIandSNR(receivedRSSI, receivedSNR)) {
+    int meanRSSI = dummyTotalReceivedRSSI/dummyCounter;
+    float meanSNR = dummyTotalReceivedSNR/dummyCounter;
+    Serial.print("Media del RSSI de dummy packages: ");
+    Serial.println(meanRSSI);
+    Serial.print("Media del SNR de dummy packages: ");
+    Serial.println(meanSNR);
+    if (checkReceivedRSSIandSNR(meanRSSI, meanSNR)) {
       sendImprovedConfig = true;
     } else {
       sendImprovedConfig = false;
     }
+    dummyCounter = 0;
+  } else if (incomingMsgId == 0) {  // ID = 0 significa que recibe un paquete dummy
+    dummyTotalReceivedRSSI += receivedRSSI;
+    dummyTotalReceivedSNR += receivedSNR;
+    dummyCounter++;
+    
   }
 }
 

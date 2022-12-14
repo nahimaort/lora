@@ -166,9 +166,11 @@ void loop()
     LoRa.receive();
   }
 
+  /*
   if ((millis() - lastSendTime_ms) > tiempo_max) {
     goBackToInitialConf();
   }
+  */
 }
 // --------------------------------------------------------------------
 // Receiving message function
