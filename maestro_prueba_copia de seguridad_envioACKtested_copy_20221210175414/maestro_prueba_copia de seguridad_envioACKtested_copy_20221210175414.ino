@@ -36,6 +36,7 @@ volatile uint16_t lastMsgID;
 volatile int thresholdRSSI = -80;   // Umbral para el RSSI [0, -127]
 volatile float thresholdSNR = -10;  // Umbral para el SNR [20, -148]
 volatile uint32_t lastReceivedTime_ms = 0;
+volatile bool firstConnection = false;
 
 int tiempo_max = 50000;
 int dummyCounter = 0;
@@ -136,7 +137,7 @@ void loop()
   static uint16_t msgCount = 1;
   static uint32_t txInterval_ms = TX_LAPSE_MS;
   static uint32_t tx_begin_ms = 0;
-      
+   
   if (!transmitting && ((millis() - lastSendTime_ms) > txInterval_ms) && !flag_ack_wait) {
 
     uint8_t payload[50];
@@ -204,7 +205,7 @@ void loop()
   }*/
 
 
-  if(((millis() - lastReceivedTime_ms) > tiempo_max) && ((millis() - lastSendTime_ms) > tiempo_max)) {
+  if(((millis() - lastReceivedTime_ms) > tiempo_max) && !firstConnection) {
     goBackToInitialConf();
   }
 
@@ -233,6 +234,8 @@ void sendMessage(uint8_t* payload, uint8_t payloadLength, uint16_t msgCount)
 // --------------------------------------------------------------------
 void onReceive(int packetSize) 
 {
+  firstConnection = false;
+
   if (transmitting && !txDoneFlag) txDoneFlag = true;
   
   if (packetSize == 0) return;          // Si no hay mensajes, retornamos
@@ -422,5 +425,6 @@ void goBackToInitialConf() {
   transmitting = false;
   flag_ack_wait = false;
   txDoneFlag = true;
+  firstConnection = true;
   changeMasterConfiguration();
 }

@@ -31,6 +31,8 @@ volatile bool txDoneFlag = true;       // Flag para indicar cuando ha finalizado
 volatile bool transmitting = false;
 volatile bool flag_envio = false;
 volatile bool flag_cambio = false;
+volatile bool firstConnection = false;
+
 static uint32_t lastSendTime_ms = 0;
 static uint32_t tx_begin_ms = 0;
 static uint16_t msgCount = 0;
@@ -167,17 +169,19 @@ void loop()
   }
 
 
-/*
-  if ((millis() - lastSendTime_ms) > tiempo_max) {
+
+  if ((millis() - tx_begin_ms) > tiempo_max && !firstConnection) {
     goBackToInitialConf();
   }
-  */
+
 }
 // --------------------------------------------------------------------
 // Receiving message function
 // --------------------------------------------------------------------
 void onReceive(int packetSize) 
 {
+  firstConnection = false;
+
   if (transmitting && !txDoneFlag) txDoneFlag = true;
   
   if (packetSize == 0) return;          // Si no hay mensajes, retornamos
@@ -367,5 +371,6 @@ void goBackToInitialConf() {
   thisNodeConf = initialNodeConf;
   flag_envio = false;
   transmitting = false;
+  firstConnection = true;
   aplicar_cambios();
 }
