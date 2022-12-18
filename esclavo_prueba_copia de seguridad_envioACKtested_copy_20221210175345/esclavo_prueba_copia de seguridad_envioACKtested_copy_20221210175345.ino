@@ -370,6 +370,7 @@ void goBackToInitialConf() {
   Serial.println("Going back to initial conf");
   thisNodeConf = initialNodeConf;
   flag_envio = false;
+  flag_cambio = false;
   transmitting = false;
   firstConnection = true;
   aplicar_cambios();
